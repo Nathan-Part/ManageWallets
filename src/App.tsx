@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { generateRecurring } from './db'
 import { EntrySheet, type EntryTarget } from './components/EntrySheet'
 import { monthOf, todayISO } from './lib/dates'
+import { getCurrency, subscribeCurrency } from './lib/money'
 import { Home } from './pages/Home'
 import { More } from './pages/More'
 import { Stats } from './pages/Stats'
@@ -20,6 +21,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('home')
   const [month, setMonth] = useState(() => monthOf(todayISO()))
   const [entry, setEntry] = useState<EntryTarget | null>(null)
+  // Changer de devise remonte les pages pour réafficher tous les montants.
+  const currency = useSyncExternalStore(subscribeCurrency, getCurrency)
 
   useEffect(() => {
     const run = () => document.visibilityState === 'visible' && void generateRecurring()
@@ -39,7 +42,7 @@ export default function App() {
 
   return (
     <>
-      <main className="page">
+      <main className="page" key={currency}>
         {tab === 'home' && (
           <Home month={month} setMonth={setMonth} onAdd={add} onSeeAll={() => setTab('list')}
             onEdit={(item) => setEntry({ kind: 'tx', item })} />

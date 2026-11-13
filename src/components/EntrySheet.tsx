@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db, generateRecurring, newId, type Recurring, type Transaction, type TxType } from '../db'
 import { todayISO } from '../lib/dates'
-import { centsToInput, parseAmount } from '../lib/money'
+import { centsToInput, currencySymbol, parseAmount } from '../lib/money'
 import { Sheet } from './Sheet'
 
 export type EntryTarget =
@@ -70,7 +70,7 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose: 
   return (
     <Sheet title={title} onClose={onClose}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void save() }}>
-        <div className="segmented" role="tablist">
+        <div className={`segmented typed ${type}`} role="tablist">
           {(['expense', 'income'] as const).map((t) => (
             <button key={t} type="button" role="tab" aria-selected={type === t}
               className={type === t ? 'active' : ''} onClick={() => setType(t)}>
@@ -79,11 +79,11 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose: 
           ))}
         </div>
 
-        <label className="amount-field">
+        <label className={`amount-field ${type}`}>
           <span className="sr-only">Montant</span>
           <input inputMode="decimal" placeholder="0" autoFocus={!item} value={amount}
             onChange={(e) => { setAmount(e.target.value); setError('') }} />
-          <span aria-hidden>€</span>
+          <span aria-hidden>{currencySymbol()}</span>
         </label>
 
         <div className="chips">

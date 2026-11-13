@@ -5,8 +5,8 @@ import { formatMoney } from '../lib/money'
 export function TxRow({ tx, cat, onClick }: { tx: Transaction; cat?: Category; onClick: () => void }) {
   const title = tx.note || cat?.name || 'Sans catégorie'
   return (
-    <button className="row" onClick={onClick}>
-      <span className="row-icon" aria-hidden>{cat?.icon ?? '❔'}</span>
+    <button className="row" onClick={onClick} aria-label={`Modifier : ${title}`}>
+      <span className={`row-icon ${tx.type}`} aria-hidden>{cat?.icon ?? '❔'}</span>
       <span className="row-main">
         <span className="row-title">{title}</span>
         <span className="row-sub">
@@ -18,6 +18,7 @@ export function TxRow({ tx, cat, onClick }: { tx: Transaction; cat?: Category; o
         {tx.type === 'income' ? '+' : '−'}
         {formatMoney(tx.amount)}
       </span>
+      <span className="chevron" aria-hidden>›</span>
     </button>
   )
 }

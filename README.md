@@ -6,6 +6,7 @@ Application web installable (PWA) pour suivre ses revenus et ses dépenses, simp
 - **Saisie rapide** : bouton +, montant, catégorie, c'est enregistré.
 - **Opérations récurrentes** : salaire, loyer, abonnements ajoutés automatiquement chaque mois.
 - **Stats** : solde du mois, évolution sur 6 mois, répartition par catégorie.
+- **Devise** : euro (€) ou shekel (₪), au choix dans l'onglet « Plus ».
 - **Sauvegarde** : export / import d'un fichier JSON (onglet « Plus »).
 
 ## Développement

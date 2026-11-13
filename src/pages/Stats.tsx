@@ -30,8 +30,8 @@ export function Stats({ month, setMonth }: { month: string; setMonth: (m: string
     <>
       <MonthSwitcher month={month} onChange={setMonth} />
       <div className="tiles">
-        <div className="card tile"><span>Revenus</span><b>{formatMoney(income)}</b></div>
-        <div className="card tile"><span>Dépenses</span><b>{formatMoney(expense)}</b></div>
+        <div className="card tile"><span>Revenus</span><b className="amount income">{formatMoney(income)}</b></div>
+        <div className="card tile"><span>Dépenses</span><b className="amount expense">{formatMoney(expense)}</b></div>
         <div className="card tile"><span>Épargné</span><b>{balance < 0 ? '−' : ''}{formatMoney(Math.abs(balance))}</b></div>
         <div className="card tile"><span>Dépenses moy. / mois</span><b>{formatMoney(avg)}</b></div>
       </div>
@@ -52,7 +52,7 @@ export function Stats({ month, setMonth }: { month: string; setMonth: (m: string
             ))}
           </div>
         </div>
-        <CategoryBars txs={monthTxs.filter((t) => t.type === type)} cats={cats} />
+        <CategoryBars txs={monthTxs.filter((t) => t.type === type)} cats={cats} type={type} />
       </section>
     </>
   )

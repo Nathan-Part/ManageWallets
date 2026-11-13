@@ -4,7 +4,7 @@ import { monthLabel, monthShort } from '../lib/dates'
 import { formatMoney } from '../lib/money'
 
 /** Répartition par catégorie : barres horizontales triées, une seule teinte (magnitude). */
-export function CategoryBars({ txs, cats }: { txs: Transaction[]; cats: Map<string, Category> }) {
+export function CategoryBars({ txs, cats, type }: { txs: Transaction[]; cats: Map<string, Category>; type: 'expense' | 'income' }) {
   const sums = new Map<string, number>()
   for (const t of txs) sums.set(t.categoryId, (sums.get(t.categoryId) ?? 0) + t.amount)
   const rows = [...sums].sort((a, b) => b[1] - a[1])
@@ -23,7 +23,7 @@ export function CategoryBars({ txs, cats }: { txs: Transaction[]; cats: Map<stri
                 {formatMoney(value)} <small>{Math.round((value / total) * 100)} %</small>
               </span>
             </div>
-            <div className="bar-track"><div className="bar-fill" style={{ width: `${(value / max) * 100}%` }} /></div>
+            <div className="bar-track"><div className={`bar-fill ${type}`} style={{ width: `${(value / max) * 100}%` }} /></div>
           </li>
         )
       })}

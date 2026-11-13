@@ -18,13 +18,23 @@ export function Home({ month, setMonth, onEdit, onSeeAll, onAdd }: {
   const recent = [...txs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
   return (
     <>
+      <header className="brand">
+        <img src="./icon.svg" alt="" width="32" height="32" />
+        <span>ManageWallets</span>
+      </header>
       <MonthSwitcher month={month} onChange={setMonth} />
-      <section className="hero card">
+      <section className="hero">
         <span className="hero-label">Solde du mois</span>
         <span className="hero-value">{balance < 0 ? '−' : ''}{formatMoney(Math.abs(balance))}</span>
         <div className="hero-split">
-          <div><span className="hero-label">Revenus</span><b className="amount income">+{formatMoney(income)}</b></div>
-          <div><span className="hero-label">Dépenses</span><b>−{formatMoney(expense)}</b></div>
+          <div className="hero-stat">
+            <span className="stat-ico in" aria-hidden>↓</span>
+            <div><span className="hero-label">Revenus</span><b>{formatMoney(income)}</b></div>
+          </div>
+          <div className="hero-stat">
+            <span className="stat-ico out" aria-hidden>↑</span>
+            <div><span className="hero-label">Dépenses</span><b>{formatMoney(expense)}</b></div>
+          </div>
         </div>
         {income > 0 && (
           <div className="bar-track" title="Part des revenus dépensée">
@@ -34,7 +44,7 @@ export function Home({ month, setMonth, onEdit, onSeeAll, onAdd }: {
         {income > 0 && (
           <span className="hero-hint">
             {expense > income
-              ? `⚠️ Tu as dépensé ${formatMoney(expense - income)} de plus que tes revenus`
+              ? `Tu as dépensé ${formatMoney(expense - income)} de plus que tes revenus`
               : `${Math.round((expense / income) * 100)} % de tes revenus dépensés`}
           </span>
         )}

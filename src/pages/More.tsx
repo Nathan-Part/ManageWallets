@@ -4,7 +4,7 @@ import { db, exportBackup, importBackup, newId, type Category, type Recurring, t
 import { Sheet } from '../components/Sheet'
 import { useCategories } from '../hooks'
 import { todayISO } from '../lib/dates'
-import { formatMoney } from '../lib/money'
+import { CURRENCIES, formatMoney, getCurrency, setCurrency } from '../lib/money'
 
 export function More({ onEditRule }: { onEditRule: (rule?: Recurring) => void }) {
   const rules = useLiveQuery(() => db.recurring.toArray(), []) ?? []
@@ -39,6 +39,17 @@ export function More({ onEditRule }: { onEditRule: (rule?: Recurring) => void })
     <>
       <h1 className="page-title">Plus</h1>
 
+      <div className="section-head"><h2>Devise</h2></div>
+      <div className="segmented">
+        {CURRENCIES.map((c) => (
+          <button key={c.code} className={getCurrency() === c.code ? 'active' : ''}
+            aria-pressed={getCurrency() === c.code} onClick={() => setCurrency(c.code)}>
+            {c.symbol} {c.label}
+          </button>
+        ))}
+      </div>
+      <p className="hint">Change uniquement le symbole affiché, sans conversion des montants.</p>
+
       <div className="section-head">
         <h2>Opérations récurrentes</h2>
         <button className="link" onClick={() => onEditRule()}>+ Ajouter</button>
@@ -51,7 +62,7 @@ export function More({ onEditRule }: { onEditRule: (rule?: Recurring) => void })
               return (
                 <div className="row" key={r.id}>
                   <button className="row-btn" onClick={() => onEditRule(r)}>
-                    <span className="row-icon" aria-hidden>{c?.icon ?? '❔'}</span>
+                    <span className={`row-icon ${r.type}`} aria-hidden>{c?.icon ?? '❔'}</span>
                     <span className="row-main">
                       <span className="row-title">{r.note || c?.name || 'Sans catégorie'}</span>
                       <span className="row-sub">{r.active ? 'Mensuel' : 'En pause'} · le {r.day}</span>

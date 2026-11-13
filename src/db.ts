@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import { todayISO } from './lib/dates'
+import { getCurrency, setCurrency, type Currency } from './lib/money'
 import { dueDates } from './lib/recurring'
 
 export type TxType = 'expense' | 'income'
@@ -99,6 +100,7 @@ export interface Backup {
   app: 'managewallets'
   version: 1
   exportedAt: string
+  currency?: Currency
   transactions: Transaction[]
   categories: Category[]
   recurring: Recurring[]
@@ -110,7 +112,7 @@ export async function exportBackup(): Promise<Backup> {
     db.categories.toArray(),
     db.recurring.toArray(),
   ])
-  return { app: 'managewallets', version: 1, exportedAt: new Date().toISOString(), transactions, categories, recurring }
+  return { app: 'managewallets', version: 1, exportedAt: new Date().toISOString(), currency: getCurrency(), transactions, categories, recurring }
 }
 
 /** Remplace toutes les données par celles de la sauvegarde. */
@@ -125,4 +127,5 @@ export async function importBackup(data: unknown): Promise<void> {
     await db.transactions.bulkAdd(b.transactions!)
     await db.recurring.bulkAdd(b.recurring!)
   })
+  setCurrency(b.currency)
 }
