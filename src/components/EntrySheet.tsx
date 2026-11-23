@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db, generateRecurring, newId, type Recurring, type Transaction, type TxType } from '../db'
+import { db, generateRecurring, isValidDate, newId, type Recurring, type Transaction, type TxType } from '../db'
 import { todayISO } from '../lib/dates'
 import { centsToInput, currencySymbol, parseAmount } from '../lib/money'
 import { Sheet } from './Sheet'
@@ -28,7 +28,7 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose: 
     const cents = parseAmount(amount)
     if (!cents) return setError('Saisis un montant valide (ex. 12,50)')
     if (!selected) return setError('Choisis une catégorie')
-    if (!date) return setError('Choisis une date')
+    if (!isValidDate(date)) return setError('Choisis une date valide (entre 2000 et 2100)')
     const base = { type, amount: cents, categoryId: selected, note: note.trim() }
     const day = Number(date.slice(8, 10))
 
@@ -97,7 +97,7 @@ export function EntrySheet({ target, onClose }: { target: EntryTarget; onClose: 
 
         <label className="field">
           <span>{isRule ? 'Première échéance (puis chaque mois ce jour-là)' : 'Date'}</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input type="date" min="2000-01-01" max="2100-12-31" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label className="field">
           <span>Note (facultatif)</span>

@@ -115,17 +115,84 @@ export async function exportBackup(): Promise<Backup> {
   return { app: 'managewallets', version: 1, exportedAt: new Date().toISOString(), currency: getCurrency(), transactions, categories, recurring }
 }
 
-/** Remplace toutes les données par celles de la sauvegarde. */
-export async function importBackup(data: unknown): Promise<void> {
-  const b = data as Partial<Backup>
-  if (b?.app !== 'managewallets' || !Array.isArray(b.transactions) || !Array.isArray(b.categories) || !Array.isArray(b.recurring)) {
+// Limites d'une sauvegarde : un fichier piégé ne doit pas pouvoir bloquer l'app ni saturer le stockage.
+export const IMPORT_LIMITS = { bytes: 10 * 1024 * 1024, transactions: 100_000, categories: 200, recurring: 200 }
+/** Plus gros montant accepté : 1 milliard, en centimes. */
+const MAX_CENTS = 100_000_000_000
+
+type Rec = Record<string, unknown>
+const isObj = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isType = (v: unknown): v is TxType => v === 'expense' || v === 'income'
+const isId = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(v)
+const isCents = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) > 0 && (v as number) <= MAX_CENTS
+const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '')
+
+/** Date 'YYYY-MM-DD' réelle, entre 2000 et 2100 (borne aussi la génération des récurrences). */
+export function isValidDate(v: unknown): v is string {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false
+  const [y, m, d] = v.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  return y >= 2000 && y <= 2100 && dt.getMonth() === m - 1 && dt.getDate() === d
+}
+
+/** Garde un seul enregistrement par identifiant (sinon l'ajout groupé échouerait). */
+function unique<T extends { id: string }>(list: T[], max: number): T[] {
+  const seen = new Map<string, T>()
+  for (const item of list) if (!seen.has(item.id)) seen.set(item.id, item)
+  return [...seen.values()].slice(0, max)
+}
+
+/** Vérifie et nettoie une sauvegarde champ par champ. Les enregistrements invalides sont ignorés. */
+export function sanitizeBackup(data: unknown): Pick<Backup, 'currency' | 'transactions' | 'categories' | 'recurring'> {
+  if (!isObj(data) || data.app !== 'managewallets' || !Array.isArray(data.transactions)
+    || !Array.isArray(data.categories) || !Array.isArray(data.recurring)) {
     throw new Error('Fichier de sauvegarde invalide')
   }
+  const categories = unique(
+    data.categories.filter(isObj).flatMap((c): Category[] => {
+      const name = str(c.name, 30).trim()
+      if (!isId(c.id) || !isType(c.type) || !name) return []
+      return [{ id: c.id, name, icon: str(c.icon, 8).trim() || '🏷️', type: c.type }]
+    }),
+    IMPORT_LIMITS.categories,
+  )
+  // Chaque type garde au moins une catégorie, sinon plus rien ne pourrait être saisi.
+  for (const type of ['expense', 'income'] as const) {
+    if (!categories.some((c) => c.type === type)) categories.push(...DEFAULT_CATEGORIES.filter((c) => c.type === type && !categories.some((x) => x.id === c.id)))
+  }
+  const recurring = unique(
+    data.recurring.filter(isObj).flatMap((r): Recurring[] => {
+      if (!isId(r.id) || !isType(r.type) || !isCents(r.amount) || !isId(r.categoryId) || !isValidDate(r.startDate)) return []
+      const day = Number(r.day)
+      if (!Number.isInteger(day) || day < 1 || day > 31) return []
+      return [{
+        id: r.id, type: r.type, amount: r.amount, categoryId: r.categoryId, note: str(r.note, 80), day,
+        startDate: r.startDate, ...(isValidDate(r.lastDate) ? { lastDate: r.lastDate } : {}), active: r.active === true,
+      }]
+    }),
+    IMPORT_LIMITS.recurring,
+  )
+  const transactions = unique(
+    data.transactions.filter(isObj).flatMap((t): Transaction[] => {
+      if (!isId(t.id) || !isType(t.type) || !isCents(t.amount) || !isId(t.categoryId) || !isValidDate(t.date)) return []
+      return [{
+        id: t.id, type: t.type, amount: t.amount, categoryId: t.categoryId, note: str(t.note, 80), date: t.date,
+        ...(isId(t.recurringId) ? { recurringId: t.recurringId } : {}),
+      }]
+    }),
+    IMPORT_LIMITS.transactions,
+  )
+  return { currency: data.currency as Currency | undefined, transactions, categories, recurring }
+}
+
+/** Remplace toutes les données par celles de la sauvegarde (vérifiée au préalable). */
+export async function importBackup(data: unknown): Promise<void> {
+  const b = sanitizeBackup(data)
   await db.transaction('rw', db.transactions, db.categories, db.recurring, async () => {
     await Promise.all([db.transactions.clear(), db.categories.clear(), db.recurring.clear()])
-    await db.categories.bulkAdd(b.categories!)
-    await db.transactions.bulkAdd(b.transactions!)
-    await db.recurring.bulkAdd(b.recurring!)
+    await db.categories.bulkAdd(b.categories)
+    await db.transactions.bulkAdd(b.transactions)
+    await db.recurring.bulkAdd(b.recurring)
   })
   setCurrency(b.currency)
 }

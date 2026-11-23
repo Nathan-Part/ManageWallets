@@ -43,12 +43,13 @@ export function formatMoney(cents: number): string {
   return fmt.format(cents / 100)
 }
 
-/** "12,50" | "12.5" | "1 200" -> centimes. null si invalide ou <= 0. */
+/** "12,50" | "12.5" | "1 200" -> centimes. null si invalide, <= 0 ou trop grand. */
 export function parseAmount(input: string): number | null {
   const s = input.replace(/[\s  €₪]/g, '').replace(',', '.')
   if (!/^\d+(\.\d{0,2})?$/.test(s)) return null
   const cents = Math.round(parseFloat(s) * 100)
-  return cents > 0 ? cents : null
+  // Plafond à 1 milliard : au-delà, la sauvegarde ne pourrait pas être réimportée.
+  return cents > 0 && cents <= 100_000_000_000 ? cents : null
 }
 
 export function centsToInput(cents: number): string {

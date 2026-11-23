@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
-import { db, exportBackup, importBackup, newId, type Category, type Recurring, type TxType } from '../db'
+import { IMPORT_LIMITS, db, exportBackup, importBackup, newId, type Category, type Recurring, type TxType } from '../db'
 import { Sheet } from '../components/Sheet'
 import { useCategories } from '../hooks'
 import { todayISO } from '../lib/dates'
@@ -19,16 +19,18 @@ export function More({ onEditRule }: { onEditRule: (rule?: Recurring) => void })
     a.href = URL.createObjectURL(blob)
     a.download = `managewallets-${todayISO()}.json`
     a.click()
-    URL.revokeObjectURL(a.href)
+    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
   }
 
   async function doImport(file: File) {
+    if (file.size > IMPORT_LIMITS.bytes) return setMessage('Fichier trop volumineux pour une sauvegarde ManageWallets')
     if (!confirm('Importer cette sauvegarde ? Toutes les données actuelles seront remplacées.')) return
     try {
       await importBackup(JSON.parse(await file.text()))
       setMessage('Sauvegarde importée ✓')
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Import impossible')
+      setMessage(e instanceof SyntaxError ? 'Fichier de sauvegarde invalide' : e instanceof Error ? e.message : 'Import impossible')
     }
   }
 

@@ -36,6 +36,7 @@ Log income and expenses in seconds, automate recurring payments, and see where y
 - **Custom categories** with emoji icons.
 - **Backup and restore** to a JSON file, so you can move to a new phone.
 - **Works offline** and installs to the home screen like a native app.
+- **App-only on phones**: on a phone the site asks you to install the app first, with step-by-step instructions (and a one-tap **Install** button on Android). On iPhone, the installed app and Safari keep separate data, so this prevents entering transactions in Safari and losing them later. If data was already saved in Safari, an **Export** button lets you move it into the installed app. Add `?test` to the URL to skip this screen during development.
 - **Light and dark themes** that follow the system setting.
 
 > The interface is in French.
@@ -45,6 +46,13 @@ Log income and expenses in seconds, automate recurring payments, and see where y
 ManageWallets is **local-first**. All data lives in the browser's IndexedDB on your device. Nothing is ever sent to a server, there is no account, no tracking and no analytics. The app also asks the browser for persistent storage so your data is not evicted.
 
 Because nothing is synced, export a backup from time to time (**Plus → Sauvegarde → Exporter**).
+
+### Security
+
+- **Content Security Policy** added to the production build: only the site's own scripts, styles, fonts and images can load, and no inline script is allowed.
+- **Strict backup validation**: imported files are checked field by field (identifiers, amounts, real dates between 2000 and 2100, text lengths), duplicates and unknown fields are dropped, list sizes are capped and files over 10 MB are refused. A crafted file cannot break the app, fill the phone's storage or flood it with generated recurring transactions.
+- **No framing**: the app refuses to run inside an iframe on another site.
+- **Dependencies audited**: `npm audit` reports no known vulnerability (a vulnerable `glob` version pulled in by the PWA build tooling is overridden in `package.json`).
 
 ## Tech stack
 
@@ -106,8 +114,11 @@ Open the live site, then:
 
 ```
 src/
+├── main.tsx             # Entry point: install screen on phones, anti-framing
+├── install.tsx          # "Install the app" screen
 ├── App.tsx              # App shell, tab navigation, recurring sync
-├── db.ts                # Dexie schema, default categories, backup/restore
+├── db.ts                # Dexie schema, default categories, backup/restore and validation
+├── db.test.ts           # Backup validation tests
 ├── hooks.ts             # Live-query hooks and totals
 ├── lib/
 │   ├── money.ts         # Cents parsing/formatting, currency setting
