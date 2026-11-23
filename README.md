@@ -77,7 +77,7 @@ Because nothing is synced, export a backup from time to time (**Plus → Sauvega
 
 ## Getting started
 
-Requires Node.js 20 or newer.
+Requires Node.js 24 (the version used by the deployment workflow; npm 11 is needed to install from the lock file).
 
 ```bash
 git clone https://github.com/Nathan-Part/ManageWallets.git
