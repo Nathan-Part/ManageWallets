@@ -14,6 +14,7 @@ Log income and expenses in seconds, automate recurring payments, and see where y
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-offline--ready-5a0fc8?logo=pwa&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e)](LICENSE)
 
 </div>
 
@@ -77,6 +78,8 @@ npm install
 npm run dev
 ```
 
+Then open http://localhost:5173. Note that the offline mode (service worker) only works with a production build: `npm run build && npm run preview`.
+
 | Script | Description |
 | --- | --- |
 | `npm run dev` | Start the development server |
@@ -114,3 +117,7 @@ src/
 ├── components/          # Bottom sheet, entry form, lists, charts
 └── pages/               # Home, Transactions, Stats, More
 ```
+
+## License
+
+[MIT](LICENSE) © Nathan-Part
